@@ -8,9 +8,10 @@
   "main": "plugin.js",
   "insomnia": {
     "name": "remote.it",
-    "description": "remote.it Authentication"
+    "description": "remote.it API authentication"
   },
   "dependencies": {
-    "http-signature": "^1.3.5"
+    "http-signature": "^1.3.5",
+    "ini": "^1.3.5"
   }
 }
