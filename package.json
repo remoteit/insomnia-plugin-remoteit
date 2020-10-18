@@ -1,0 +1,16 @@
+{
+  "name": "insomnia-plugin-remoteit",
+  "version": "1.0.0",
+  "author": "Benoit Menendez",
+  "description": "Generate HTTP Signatures for remote.it authentication",
+  "repository": "github:remoteit/insomnia-plugin-remoteit",
+  "license": "MIT",
+  "main": "plugin.js",
+  "insomnia": {
+    "name": "remote.it",
+    "description": "remote.it Authentication"
+  },
+  "dependencies": {
+    "http-signature": "^1.3.5"
+  }
+}
