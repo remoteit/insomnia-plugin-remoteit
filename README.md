@@ -1,6 +1,6 @@
 # Insomnia plugin for remote.it API authentication
 
-This is a plugin for [Insomnia](https://insomnia.rest/) that allows the signing of HTTP Messages for remote.it API access.
+This is a plugin for [Insomnia](https://insomnia.rest/) that allows the signing of HTTP Requests for [remote.it(https://remote.it/)] API access.
 
 ##  Installation
 
