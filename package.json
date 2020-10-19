@@ -1,6 +1,6 @@
 {
-  "name": "@penngrove/insomnia-plugin-remoteit",
-  "version": "1.0.0",
+  "name": "insomnia-plugin-remoteit",
+  "version": "1.0.1",
   "author": "remote.it",
   "description": "Insomnia plugin for remote.it API authentication",
   "repository": {
