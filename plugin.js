@@ -6,7 +6,6 @@ const httpSignature = require('http-signature')
 
 const R3_ACCESS_KEY_ID = 'R3_ACCESS_KEY_ID'
 const R3_SECRET_ACCESS_KEY = 'R3_SECRET_ACCESS_KEY'
-const R3_PROFILE = 'R3_PROFILE'
 
 const CREDENTIALS_FILE = '.remoteit/credentials'
 const DEFAULT_PROFILE = 'default'
@@ -66,48 +65,69 @@ module.exports.templateTags = [
   {
     name: 'remoteit',
     displayName: 'remote.it API authentication',
-    description: 'remote.it API authentication',
-    args: [],
-    async run(context) {
+    description: 'use your remote.it credentials to authorize your requests',
+    args: [
+      {
+        displayName: 'remote.it Profile',
+        type: 'string',
+        placeholder: 'default'
+      }
+    ],
+    async run(context, profile) {
+      const file = path.resolve(os.homedir(), CREDENTIALS_FILE)
+
+      if (!fs.existsSync(file)) return `remote.it credentials file not found: ${file}`
+
+      let credentials
+
+      try {
+        credentials = ini.parse(fs.readFileSync(file, 'utf-8'))
+      } catch (error) {
+        return `remote.it credentials file error: ${error.message}`
+      }
+
+      if (profile) {
+        credentials = getSection(credentials, profile)
+
+        if (!credentials) return `remote.it profile not found: ${profile}`
+      } else {
+        credentials = getSection(credentials, DEFAULT_PROFILE) || credentials
+      }
+
+      const key = credentials[R3_ACCESS_KEY_ID]
+
+      if (!key) return `remote.it credentials missing: ${R3_ACCESS_KEY_ID}`
+
+      const secret = credentials[R3_SECRET_ACCESS_KEY]
+
+      if (!secret) return `remote.it credentials missing: ${R3_SECRET_ACCESS_KEY}`
+
+      await Promise.all([
+        context.store.setItem(R3_ACCESS_KEY_ID, key),
+        context.store.setItem(R3_SECRET_ACCESS_KEY, secret)
+      ])
+
+      return `using key: ${key}`
     }
   }
 ]
 
 module.exports.requestHooks = [
   async (context) => {
-    const request = context.request
+    const [key, secret] = await Promise.all([
+      context.store.getItem(R3_ACCESS_KEY_ID),
+      context.store.getItem(R3_SECRET_ACCESS_KEY)
+    ])
 
-    let keyId = request.getEnvironmentVariable(R3_ACCESS_KEY_ID)
-    let key = request.getEnvironmentVariable(R3_SECRET_ACCESS_KEY)
+    if (!key || !secret) return // missing credentials
 
-    if (!keyId || !key) {
-      const config = path.resolve(os.homedir(), CREDENTIALS_FILE)
-
-      if (fs.existsSync(config)) {
-        let credentials = ini.parse(fs.readFileSync(config, 'utf-8'))
-
-        const profile = request.getEnvironmentVariable(R3_PROFILE)
-
-        if (profile) {
-          credentials = getSection(credentials, profile)
-
-          if (!credentials) throw new Error(`remote.it profile ${profile} not found`)
-        } else {
-          credentials = getSection(credentials, DEFAULT_PROFILE) || credentials
-        }
-
-        keyId = credentials[R3_ACCESS_KEY_ID]
-        key = credentials[R3_SECRET_ACCESS_KEY]
-      }
-    }
-
-    if (!keyId || !key) throw new Error('no remote.it credentials')
-
-    httpSignature.sign(new RequestWrapper(request), {
-      keyId,
-      key: Buffer.from(key, 'base64'),
+    httpSignature.sign(new RequestWrapper(context.request), {
+      keyId: key,
+      key: Buffer.from(secret, 'base64'),
       algorithm: SIGNATURE_ALGORITHM,
       headers: SIGNED_HEADERS.split(/\s+/)
     })
+
+    await context.store.clear() // clear after use
   }
 ]
