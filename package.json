@@ -1,9 +1,12 @@
 {
-  "name": "insomnia-plugin-remoteit",
+  "name": "@penngrove/insomnia-plugin-remoteit",
   "version": "1.0.0",
   "author": "remote.it",
   "description": "Insomnia plugin for remote.it API authentication",
-  "repository": "github:remoteit/insomnia-plugin-remoteit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remoteit/insomnia-plugin-remoteit.git"
+  },
   "license": "MIT",
   "main": "plugin.js",
   "insomnia": {
@@ -13,5 +16,13 @@
   "dependencies": {
     "http-signature": "^1.3.5",
     "ini": "^1.3.5"
+  },
+  "bugs": {
+    "url": "https://github.com/remoteit/insomnia-plugin-remoteit/issues"
+  },
+  "homepage": "https://github.com/remoteit/insomnia-plugin-remoteit#readme",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
