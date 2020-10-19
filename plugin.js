@@ -18,7 +18,16 @@ const APPLICATION_JSON = 'application/json'
 class RequestWrapper {
   constructor(request) {
     this.request = request
-    this.url = new URL(request.getUrl())
+
+    const url = request.getUrl()
+
+    if (!url) throw new Error('No URL specified')
+
+    try {
+      this.url = new URL(url)
+    } catch (error) {
+      throw new Error(`Invalid URL specified: ${url}`)
+    }
 
     for (const parameter of request.getParameters()) {
       this.url.searchParams.append(parameter.name, parameter.value)
