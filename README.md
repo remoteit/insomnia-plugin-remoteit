@@ -30,5 +30,7 @@ R3_ACCESS_KEY_ID=OYJKQK4O43MXYI7JHSUI
 R3_SECRET_ACCESS_KEY=F/WCo0MH3uuyj1rYnXHDP+DqSIXkwKOpn/C0MbWa
 ```
 
-You can specify on the template tag the `remote.it Profile` you want to use. Profile names
-are case-insensitive and the `default` profile will be selected by default. 
+You can specify the `remote.it Profile` you want to use on the template tag. Profile names
+are case-insensitive and cannot contain a period.
+ 
+The `default` profile will be selected by default. 
