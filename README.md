@@ -11,7 +11,7 @@ Install the `insomnia-plugin-remoteit` plugin from Preferences -> Plugins.
 In the query `Auth` tab, select `Bearer Token` and add the `remote.it API authentication`
 template tag in the `TOKEN` field. 
 
-The plugin will get your credentials from your _remote.it_ credentials file located at
+The plugin will get your credentials from your _remote.it_ credentials file located at (the credentials below are non workng examples, make sure to use your credentials)
 `~/.remoteit/credentials`:
 
 ```ini
