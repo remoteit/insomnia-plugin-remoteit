@@ -55,7 +55,7 @@ class RequestWrapper {
       case 'content-length':
         const body = this.request.getBody()
 
-        return body.text.length
+        return body.text ? Buffer.byteLength(body.text, 'utf8') : 0
       default:
         return null
     }
