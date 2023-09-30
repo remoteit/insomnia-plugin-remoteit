@@ -1,68 +1,45 @@
+const crypto = require('crypto')
 const fs = require('fs')
 const ini = require('ini')
 const os = require('os')
 const path = require('path')
-const httpSignature = require('http-signature')
+const {default: {signMessage}, createSigner} = require('http-message-signatures')
 
 const R3_ACCESS_KEY_ID = 'R3_ACCESS_KEY_ID'
 const R3_SECRET_ACCESS_KEY = 'R3_SECRET_ACCESS_KEY'
 
 const CREDENTIALS_FILE = '.remoteit/credentials'
-const DEFAULT_PROFILE = 'default'
+const DEFAULT_PROFILE = 'DEFAULT'
 
 const SIGNATURE_ALGORITHM = 'hmac-sha256'
-const SIGNED_HEADERS = '(request-target) host date content-type content-length'
+const SIGNED_HEADERS = ['@method', '@authority', '@target-uri', 'content-digest', 'date']
 
 const APPLICATION_JSON = 'application/json'
 
-class RequestWrapper {
-  constructor (request) {
-    this.request = request
+function wrap (request) {
+  const url = new URL(request.getUrl())
 
-    const url = request.getUrl()
+  for (const {name, value} of request.getParameters()) url.searchParams.append(name, value)
 
-    if (!url) throw new Error('No URL specified')
+  const headers = request.getHeaders().reduce((result, {name, value}) => {
+    result[name] = value
+    return result
+  }, {})
 
-    try {
-      this.url = new URL(url)
-    } catch (error) {
-      throw new Error(`Invalid URL specified: ${url}`)
-    }
+  const {text} = request.getBody()
 
-    for (const parameter of request.getParameters()) {
-      this.url.searchParams.append(parameter.name, parameter.value)
-    }
-  }
+  const length = Buffer.byteLength(text, 'utf8')
+  const digest = crypto.createHash('sha256').update(text).digest('base64')
 
-  get method () {
-    return this.request.getMethod()
-  }
+  headers['Content-Length'] = length.toString(10)
+  headers['Content-Digest'] = `sha-256=:${digest}:`
+  headers['Host'] = url.hostname
+  headers['Date'] ||= new Date().toUTCString()
 
-  get path () {
-    return `${this.url.pathname}${this.url.search}`
-  }
-
-  getHeader (name) {
-    const result = this.request.getHeader(name)
-
-    if (result) return result
-
-    switch (name) {
-      case 'host':
-        return this.url.hostname
-      case 'content-type':
-        return APPLICATION_JSON
-      case 'content-length':
-        const body = this.request.getBody()
-
-        return Buffer.byteLength(body.text, 'utf8')
-      default:
-        return null
-    }
-  }
-
-  setHeader (name, value) {
-    this.request.setHeader(name, value)
+  return {
+    method: request.getMethod(),
+    url,
+    headers
   }
 }
 
@@ -112,14 +89,28 @@ module.exports.templateTags = [{
   }
 }]
 
-module.exports.requestHooks = [async (context) => {
-  const [key, secret] = await Promise.all([context.store.getItem(R3_ACCESS_KEY_ID), context.store.getItem(R3_SECRET_ACCESS_KEY)])
+module.exports.requestHooks = [
+  async ({store, request}) => {
+    const [key, secret] = await Promise.all([
+      store.getItem(R3_ACCESS_KEY_ID),
+      store.getItem(R3_SECRET_ACCESS_KEY)
+    ])
 
-  if (!key || !secret) return // missing credentials
+    if (!key || !secret) return
 
-  httpSignature.sign(new RequestWrapper(context.request), {
-    keyId: key, key: Buffer.from(secret, 'base64'), algorithm: SIGNATURE_ALGORITHM, headers: SIGNED_HEADERS.split(/\s+/)
-  })
+    const {headers} = await signMessage(
+      {
+        key: createSigner(Buffer.from(secret, 'base64'), SIGNATURE_ALGORITHM, key),
+        name: 'remoteit',
+        fields: SIGNED_HEADERS
+      },
+      wrap(request)
+    )
 
-  await context.store.clear() // clear after use
-}]
+    Object.entries(headers).forEach(([name, value]) => request.setHeader(name, value))
+
+    request.setHeader('Authorization', '')
+
+    await store.clear()
+  }
+]
