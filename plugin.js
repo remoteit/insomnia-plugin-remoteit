@@ -1,4 +1,3 @@
-const crypto = require('crypto')
 const fs = require('fs')
 const ini = require('ini')
 const os = require('os')
@@ -12,9 +11,7 @@ const CREDENTIALS_FILE = '.remoteit/credentials'
 const DEFAULT_PROFILE = 'DEFAULT'
 
 const SIGNATURE_ALGORITHM = 'hmac-sha256'
-const SIGNED_HEADERS = ['@method', '@authority', '@target-uri', 'content-digest', 'date']
-
-const APPLICATION_JSON = 'application/json'
+const SIGNED_HEADERS = ['@method', '@authority', '@target-uri', 'date']
 
 function wrap (request) {
   const url = new URL(request.getUrl())
@@ -26,13 +23,6 @@ function wrap (request) {
     return result
   }, {})
 
-  const {text} = request.getBody()
-
-  const length = Buffer.byteLength(text, 'utf8')
-  const digest = crypto.createHash('sha256').update(text).digest('base64')
-
-  headers['Content-Length'] = length.toString(10)
-  headers['Content-Digest'] = `sha-256=:${digest}:`
   headers['Host'] = url.hostname
   headers['Date'] ||= new Date().toUTCString()
 
