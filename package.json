@@ -9,6 +9,9 @@
   },
   "license": "MIT",
   "main": "plugin.js",
+  "files": [
+    "plugin.js"
+  ],
   "insomnia": {
     "name": "remote.it",
     "description": "remote.it API authentication"
