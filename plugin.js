@@ -1,9 +1,5 @@
-const fs = require('fs')
-const ini = require('ini')
-const os = require('os')
-const path = require('path')
-const {default: {signMessage}, createSigner} = require('http-message-signatures')
-
+// Insomnia v13 runs plugins in an isolated background process: Node.js APIs
+// must only be loaded inside hook bodies, never at the top level.
 const R3_ACCESS_KEY_ID = 'R3_ACCESS_KEY_ID'
 const R3_SECRET_ACCESS_KEY = 'R3_SECRET_ACCESS_KEY'
 
@@ -45,6 +41,11 @@ module.exports.templateTags = [{
     displayName: 'remote.it Profile', type: 'string', placeholder: 'default'
   }],
   async run (context, profile) {
+    const fs = require('fs')
+    const ini = require('ini')
+    const os = require('os')
+    const path = require('path')
+
     const file = path.resolve(os.homedir(), CREDENTIALS_FILE)
 
     if (!fs.existsSync(file)) return `remote.it credentials file not found: ${file}`
@@ -81,6 +82,8 @@ module.exports.templateTags = [{
 
 module.exports.requestHooks = [
   async ({store, request}) => {
+    const {default: {signMessage}, createSigner} = require('http-message-signatures')
+
     const [key, secret] = await Promise.all([
       store.getItem(R3_ACCESS_KEY_ID),
       store.getItem(R3_SECRET_ACCESS_KEY)
